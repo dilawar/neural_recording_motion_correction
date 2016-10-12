@@ -53,17 +53,6 @@ Modification log:
 using namespace std;
 using namespace cv;
 
-void write_to_video( VideoWriter& vid, const Mat&  frame )
-{
-    try {
-        vid.write( frame );
-    }
-    catch( exception e )
-    {
-        std::cout << "Failed to write this frame" << std::endl;
-    }
-}
-
 int main(int argc, char **argv)
 {
     if(argc < 3) {
@@ -103,17 +92,22 @@ int main(int argc, char **argv)
     /*-----------------------------------------------------------------------------
      * Write corrected video to a avi file.
      *-----------------------------------------------------------------------------*/
-    Size frameSize( vInfo.width, vInfo.height );
+    Size frameSize( vInfo.height, vInfo.width );
     outputVideo.open(outfileName, FOURCC_CODEC, fps, frameSize, true);
+    cout << "Video frame size "<< frameSize << endl;
     if (outputVideo.isOpened())
     {
         for( size_t i = 0; i < stablizedFrames.size(); i ++ )
         {
             outputVideo << stablizedFrames[i];
-            //imshow( "input frame", frames[i] );
-            //imshow( "corrected frame", stablizedFrames[i] );
-            //waitKey( 100 );
-            //cout << " Playing frame " << i << endl;
+            cout << " This frame size " << stablizedFrames[i].cols << "," 
+                << stablizedFrames[i].rows << endl;
+#ifdef DEBUG
+            imshow( "input frame", frames[i] );
+            imshow( "corrected frame", stablizedFrames[i] );
+            waitKey( 100 );
+            cout << " Playing frame " << i << endl;
+#endif
         }
         outputVideo.release( );
         cout << "Wrote corrected output to " << outfileName << endl;
@@ -137,7 +131,6 @@ int main(int argc, char **argv)
         {
             Mat combined;
             hconcat( frames[i], stablizedFrames[i], combined );
-            cout << combined.rows << " " << combined.cols << endl;
             combinedVideo << combined;
         }
         combinedVideo.release( );

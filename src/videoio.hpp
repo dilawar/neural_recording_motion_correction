@@ -70,8 +70,10 @@ void get_frames_from_tiff( const string& filename
                     vidInfo.width = w;
                     vidInfo.height = h;
                     vidInfo.numFrames += 1;
-                    Mat image(h, w, CV_8U, raster );
-                    frames.push_back( image );
+                    Mat image(h, w, CV_16U, raster );
+                    //Mat grey;
+                    //cvtColor( image, grey, CV_BGR2GRAY );
+                    frames.push_back( image ); 
                 }
             }
             _TIFFfree( raster );
