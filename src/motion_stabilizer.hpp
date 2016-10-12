@@ -22,7 +22,7 @@
 // This video stablisation smooths the global trajectory using a sliding average
 // window In frames. The larger the more stable the video, but less reactive to
 // sudden panning
-const int SMOOTHING_RADIUS = 30;
+const int SMOOTHING_RADIUS = 50;
 
 // In pixels. Crops the border to reduce the black borders from stabilisation
 // being too noticeable.
