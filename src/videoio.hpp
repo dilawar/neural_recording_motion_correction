@@ -20,6 +20,10 @@
 #ifndef  videoio_INC
 #define  videoio_INC
 
+//#define FOURCC_CODEC CV_FOURCC( 'D', 'I', 'V', 'X' )
+#define FOURCC_CODEC CV_FOURCC( 'M', 'J', 'P', 'G' )
+//#define FOURCC_CODEC CV_FOURCC( 'L', 'A', 'G', 'S' )
+//
 #include <tiffio.h>
 #include <opencv2/opencv.hpp>
 
@@ -143,5 +147,32 @@ void read_frames( const string& filename
 
 }
 
+
+template< typename pixal_type_t>
+void write_frames_to_avi( const string& avifile
+        , vector< Mat_<pixal_type_t> > frames 
+        , double fps
+        )
+{
+
+    VideoWriter writer; 
+
+    /*-----------------------------------------------------------------------------
+     * Write corrected video to a avi file.
+     *-----------------------------------------------------------------------------*/
+    Size frameSize( frames[0].cols, frames[0].rows );
+    writer.open( avifile, FOURCC_CODEC, fps, frameSize, true);
+    if( writer.isOpened() )
+    {
+        for( size_t i = 0; i < frames.size(); i ++ )
+        {
+            Mat colorFrame;
+            cvtColor( frames[i], colorFrame, CV_GRAY2BGR );
+            writer << colorFrame;
+        }
+        writer.release( );
+    }
+    cout << "Wrote " << frames.size() << " frames to " << avifile << endl;
+}
 
 #endif   /* ----- #ifndef videoio_INC  ----- */

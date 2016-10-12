@@ -12,6 +12,8 @@ set(CMAKE_BUILD_TYPE Release )
 find_package( OPENCV REQUIRED COMPONENTS 
     core highgui imgproc calib3d 
     video
+    # This is required for opencv3.
+    videoio
     )
 find_package( TIFF REQUIRED )
 
