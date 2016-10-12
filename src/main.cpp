@@ -95,7 +95,7 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < stablizedFrames.size( ); i++) 
     {
         Mat combined;
-        hconcat( frames[i], stablizedFrames[i], combined );
+        hconcat( stablizedFrames[i], frames[i], combined );
         combinedFrames.push_back( combined );
     }
     write_frames_to_avi( combinedVideofileName, combinedFrames, fps );

@@ -59,6 +59,33 @@ struct Trajectory
         a = _a;
     }
 
+    /*-----------------------------------------------------------------------------
+     *  This is from here: http://nghiaho.com/uploads/videostabKalman.cpp
+     *-----------------------------------------------------------------------------*/
+    // "+"
+    friend Trajectory operator+(const Trajectory &c1,const Trajectory  &c2){
+        return Trajectory(c1.x+c2.x,c1.y+c2.y,c1.a+c2.a);
+    }
+    //"-"
+    friend Trajectory operator-(const Trajectory &c1,const Trajectory  &c2){
+        return Trajectory(c1.x-c2.x,c1.y-c2.y,c1.a-c2.a);
+    }
+    //"*"
+    friend Trajectory operator*(const Trajectory &c1,const Trajectory  &c2){
+        return Trajectory(c1.x*c2.x,c1.y*c2.y,c1.a*c2.a);
+    }
+    //"/"
+    friend Trajectory operator/(const Trajectory &c1,const Trajectory  &c2){
+        return Trajectory(c1.x/c2.x,c1.y/c2.y,c1.a/c2.a);
+    }
+    //"="
+    Trajectory operator =(const Trajectory &rx){
+        x = rx.x;
+        y = rx.y;
+        a = rx.a;
+        return Trajectory(x,y,a);
+    }
+
     double x;
     double y;
     double a; // angle
@@ -66,7 +93,7 @@ struct Trajectory
 
 
 template< typename pixal_type_t>
-void stabilize( vector< Mat_<pixal_type_t> >& frames
+void stabilize( const vector< Mat_<pixal_type_t> >& frames
         , vector<Mat_<pixal_type_t> >& result )
 {
     // For further analysis
@@ -81,6 +108,25 @@ void stabilize( vector< Mat_<pixal_type_t> >& frames
     vector <TransformParam> prev_to_cur_transform; // previous to current
     Mat last_T;
     Mat curGrey, prevGrey;
+
+    double a = 0.0, x = 0.0, y = 0.0;
+
+    // Step 3 - Smooth out the trajectory using an averaging window
+    vector <Trajectory> smoothed_trajectory; // trajectory at all frames
+    Trajectory X; 
+    Trajectory X_;
+    Trajectory P;
+    Trajectory P_;
+    Trajectory K;                               /* Gain */
+    Trajectory z;                               /* Actual measurement */
+    double pstd = 4e-3;
+    double cstd = 0.25;
+
+    Trajectory Q( pstd, pstd, pstd );           /* Process noise covariance */
+    Trajectory R( cstd, cstd, cstd);            /* Measurement noise covariance */
+
+    X = Trajectory( 0, 0, 0);
+    P = Trajectory( 1, 1, 1);
 
     for (size_t k = 1; k < frames.size(); k++)
     {
@@ -105,6 +151,9 @@ void stabilize( vector< Mat_<pixal_type_t> >& frames
             }
         }
 
+
+        // Step 5 - Apply the new transformation to the video
+        //inputVideo.set(CV_CAP_PROP_POS_FRAMES, 0);
         // translation + rotation only
         // false = rigid transform, no scaling/shearing
         Mat T = estimateRigidTransform(prev_corner2, cur_corner2, false);
@@ -112,10 +161,7 @@ void stabilize( vector< Mat_<pixal_type_t> >& frames
         // in rare cases no transform is found. We'll just use the last known
         // good transform.
         if(T.data == NULL)
-        {
             last_T.copyTo(T);
-        }
-
         T.copyTo(last_T);
 
         // decompose T
@@ -123,128 +169,64 @@ void stabilize( vector< Mat_<pixal_type_t> >& frames
         double dy = T.at<double>(1,2);
         double da = atan2(T.at<double>(1,0), T.at<double>(0,0));
 
-        prev_to_cur_transform.push_back(TransformParam(dx, dy, da));
+        //prev_to_cur_transform.push_back(TransformParam(dx, dy, da));
 
 #ifdef  DEBUG
         out_transform << k << " " << dx << " " << dy << " " << da << endl;
 #endif     /* -----  not DEBUG  ----- */
 
 
-        curGrey.copyTo(prevGrey);
+        // Accumulated frame to frame transform
+        x += dx;
+        y += dy;
+        a += da;
+
+#ifdef DEBUG
+        out_trajectory << k << " " << x " " << y << " " << a << endl;
+#endif 
+        z = Trajectory( x, y, a);
+        X_ = X; 
+        P_ = P + Q; 
+        // meaurement update correction
+        K = P_ / (P_ + R );
+        X = X_ + K * ( z - X_ );
+        P = (Trajectory(1,1,1) - K) * P_;
+
+#ifdef DEBUG 
+        out_smoothed_trajectory << k << " " << X.x << " " << X.y << " " 
+            << X.a << endl;
+#endif
+
+        // target - current
+        double diffX = X.x - x;
+        double diffY = X.y - y;
+        double diffa = X.a - a;
+        dx += diffX; dy += diffY; da += diffa;
+
+#ifdef DEBUG 
+        out_new_transform << k << " " << dx << " " << dy << " " << da << endl;
+#endif 
+        T.at<double>(0,0) = cos( da );
+        T.at<double>(0,1) = -sin( da );
+        T.at<double>(1,0) = sin( da );
+        T.at<double>(1,1) = cos( da );
+
+        T.at<double>(0,2) = dx;
+        T.at<double>(1,2) = dy;
 
 #ifdef DBEUG
         cout << "[DEBUG] Frame: " << k << "/" << frames.size()
             << " - good optical flow: " << prev_corner2.size() << endl;
 #endif 
 
-    }
-
-    // Step 2 - Accumulate the transformations to get the image trajectory
-
-    // Accumulated frame to frame transform
-    double a = 0;
-    double x = 0;
-    double y = 0;
-
-    vector <Trajectory> trajectory; // trajectory at all frames
-
-    for(size_t i=0; i < prev_to_cur_transform.size(); i++)
-    {
-        x += prev_to_cur_transform[i].dx;
-        y += prev_to_cur_transform[i].dy;
-        a += prev_to_cur_transform[i].da;
-
-        trajectory.push_back(Trajectory(x,y,a));
-
-#ifdef DEBUG
-        out_trajectory << (i+1) << " " << x << " " << y << " " << a << endl;
-#endif
-    }
-
-    // Step 3 - Smooth out the trajectory using an averaging window
-    vector <Trajectory> smoothed_trajectory; // trajectory at all frames
-
-    for(size_t i=0; i < trajectory.size(); i++)
-    {
-        double sum_x = 0;
-        double sum_y = 0;
-        double sum_a = 0;
-        int count = 0;
-
-        for(int j=-SMOOTHING_RADIUS; j <= SMOOTHING_RADIUS; j++)
-        {
-            if(i+j >= 0 && i+j < trajectory.size())
-            {
-                sum_x += trajectory[i+j].x;
-                sum_y += trajectory[i+j].y;
-                sum_a += trajectory[i+j].a;
-
-                count++;
-            }
-        }
-
-        double avg_a = sum_a / count;
-        double avg_x = sum_x / count;
-        double avg_y = sum_y / count;
-
-        smoothed_trajectory.push_back(Trajectory(avg_x, avg_y, avg_a));
-
-#ifdef DEBUG
-        out_smoothed_trajectory << (i+1) << " " << avg_x
-                                    << " " << avg_y << " " << avg_a << endl;
-#endif 
-    }
-
-    // Step 4 - Generate new set of previous to current transform, such that the
-    // trajectory ends up being the same as the smoothed trajectory
-    vector <TransformParam> new_prev_to_cur_transform;
-
-    // Accumulated frame to frame transform
-    a = 0;
-    x = 0;
-    y = 0;
-
-    for(size_t i=0; i < prev_to_cur_transform.size(); i++)
-    {
-        x += prev_to_cur_transform[i].dx;
-        y += prev_to_cur_transform[i].dy;
-        a += prev_to_cur_transform[i].da;
-
-        // target - current
-        double diff_x = smoothed_trajectory[i].x - x;
-        double diff_y = smoothed_trajectory[i].y - y;
-        double diff_a = smoothed_trajectory[i].a - a;
-
-        double dx = prev_to_cur_transform[i].dx + diff_x;
-        double dy = prev_to_cur_transform[i].dy + diff_y;
-        double da = prev_to_cur_transform[i].da + diff_a;
-
-        new_prev_to_cur_transform.push_back(TransformParam(dx, dy, da));
-
-#ifdef DEBUG
-        out_new_transform << (i+1) << " " << dx << " " << dy << " " << da << endl;
-#endif
-    }
-
-    // Step 5 - Apply the new transformation to the video
-    //inputVideo.set(CV_CAP_PROP_POS_FRAMES, 0);
-    Mat T(2,3,CV_64F);
-
-    // get the aspect ratio correct
-    int vert_border = HORIZONTAL_BORDER_CROP * prevGrey.rows / prevGrey.cols;
-
-    for( size_t k = 0; k < frames.size() -1; k ++ )
-    {
-        curGrey = frames[k];
-        T.at<double>(0,0) = cos(new_prev_to_cur_transform[k].da);
-        T.at<double>(0,1) = -sin(new_prev_to_cur_transform[k].da);
-        T.at<double>(1,0) = sin(new_prev_to_cur_transform[k].da);
-        T.at<double>(1,1) = cos(new_prev_to_cur_transform[k].da);
-
-        T.at<double>(0,2) = new_prev_to_cur_transform[k].dx;
-        T.at<double>(1,2) = new_prev_to_cur_transform[k].dy;
+        // Accumulated frame to frame transform
+        a = 0;
+        x = 0;
+        y = 0;
 
         Mat cur2;
+        // get the aspect ratio correct
+        int vert_border = HORIZONTAL_BORDER_CROP * prevGrey.rows / prevGrey.cols;
 
         warpAffine(curGrey, cur2, T, curGrey.size());
 
