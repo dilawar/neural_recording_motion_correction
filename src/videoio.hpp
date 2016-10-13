@@ -26,9 +26,9 @@
 
 #include <opencv2/opencv.hpp>
 
-#ifdef USE_LIBTIFF 
+#ifdef USE_LIBTIFF
 #include <tiffio.h>
-#elif USE_TINYTIFF 
+#elif USE_TINYTIFF
 #include "tinytiffreader.h"
 #else
 
@@ -89,15 +89,18 @@ void get_frames_from_tiff ( const string& filename
                 if ( TIFFReadRGBAImage ( tif, w, h, raster, 0 )  )
                 {
                     Mat frame ( h, w, CV_16U );
-                    for (size_t i = 0; i < h; i++) 
-                        for (size_t ii = 0; ii < w; ii++) 
-                            frame.at<uint16>(i, ii) = (uint16)( raster[i*w+ii]); 
+
+                    for ( size_t i = 0; i < h; i++ )
+                        for ( size_t ii = 0; ii < w; ii++ )
+                            frame.at<uint16> ( i, ii ) = ( uint16 ) ( raster[i*w+ii] );
+
                     frames.push_back ( frame );
                 }
             }
         }
         while ( TIFFReadDirectory ( tif ) );
     }
+
     TIFFClose ( tif );
 
 #else
@@ -118,6 +121,7 @@ void get_frames_from_tiff ( const string& filename
     for ( size_t i = 0; i < frames.size(); i++ )
     {
         minMaxLoc ( frames[i], &minVal, &maxVal, &minLoc, &maxLoc );
+
         if ( maxVal > maxPixalValue )
             maxPixalValue = maxVal;
     }
@@ -133,13 +137,15 @@ void get_frames_from_tiff ( const string& filename
         }
     }
 
-#if 1 
-    for(auto f : frames )
+#if 1
+
+    for ( auto f : frames )
     {
-        imshow( "frame", f );
-        waitKey( 10 );
+        imshow ( "frame", f );
+        waitKey ( 10 );
     }
-#endif 
+
+#endif
 
 }
 
@@ -230,6 +236,85 @@ void write_frames_to_avi ( const string& avifile
     }
 
     cout << "Wrote " << frames.size() << " frames to " << avifile << endl;
+}
+
+void write_frames_to_tiff ( const string& outfile
+        , const vector< Mat > frames
+        , const string& infile 
+        )
+{
+    // Open the tiff file and create tags from the infile.
+    TIFF* out = TIFFOpen ( outfile.c_str(), "w" );
+    TIFF* in = TIFFOpen( infile.c_str(), "r" );
+
+    uint32 height, width;
+    tsize_t sampleperpixel;
+    tsize_t linebytes;
+
+    TIFFSetField ( out, TIFFTAG_IMAGEWIDTH
+            , TIFFGetField(in, TIFFTAG_IMAGEWIDTH)
+            ); 
+
+    TIFFSetField ( out, TIFFTAG_IMAGELENGTH
+            , TIFFGetField( in, TIFFTAG_IMAGELENGTH )
+            );
+
+    TIFFSetField ( out, TIFFTAG_SAMPLESPERPIXEL
+            , TIFFGetField( in, TIFFTAG_SAMPLESPERPIXEL )
+            );
+
+    TIFFSetField ( out, TIFFTAG_BITSPERSAMPLE
+            , TIFFGetField( in, TIFFTAG_BITSPERSAMPLE )
+            );
+            
+    TIFFSetField ( out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT ); 
+    TIFFSetField ( out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
+    TIFFSetField ( out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+
+    // Close the infile.
+    TIFFClose( in );
+
+    for (size_t i = 0; i < frames.size(); i++) 
+    {
+        sampleperpixel = TIFFGetField( out, TIFFTAG_SAMPLEFORMAT );
+        Mat frame = frames[i];
+        width = frame.cols;
+        height = frame.rows;
+        linebytes = sampleperpixel * width;
+
+        unsigned char * buf = NULL;
+
+        if( TIFFScanlineSize(out) * linebytes)
+            buf = (unsigned char*) _TIFFmalloc( linebytes );
+        else
+            buf = (unsigned char*) _TIFFmalloc( TIFFScanlineSize(out) );
+
+        // We set the strip size of the file to be size of one row of pixels
+        TIFFSetField(out, TIFFTAG_ROWSPERSTRIP
+                , TIFFDefaultStripSize(out, width*sampleperpixel)
+                );
+
+        // Data type matching.
+        uint32* row;
+        // See http://opencv-users.1802565.n2.nabble.com/Mat-class-with-unsigned-int-type-or-long-int-type-td7197221.html
+        frame.convertTo( frame, CV_32S );
+        for( size_t j = 0; j < frames[i].rows; j ++ )
+        {
+            row = (uint32*) malloc( width * sizeof( uint32 ) );
+            for( size_t ri = 0; ri < width; ri ++ )
+                row[ri] = (uint32) frame.at<uint32>(j, ri);
+
+            if( TIFFWriteScanline( out, row, j, 0 ) <  0)
+                break;
+
+            free( row );
+        }
+        
+        TIFFWriteDirectory( out );
+    }
+
+
+
 }
 
 #endif   /* ----- #ifndef videoio_INC  ----- */

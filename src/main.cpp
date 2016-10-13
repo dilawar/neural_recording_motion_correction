@@ -117,12 +117,19 @@ int main(int argc, char **argv)
     stabilize( initFrames, stablizedFrames );
     std::cout << "Corrected frames " << stablizedFrames.size() << std::endl;
 
-
     /*-----------------------------------------------------------------------------
-     * Write corrected video to a avi file.
+     * Write corrected video to a avi or tiff files.
      *-----------------------------------------------------------------------------*/
-    double fps = 15.0;
-    write_frames_to_avi( outfile, stablizedFrames, fps );
+    if( ext == "avi" )
+    {
+        double fps = 15.0;
+        write_frames_to_avi( outfile, stablizedFrames, fps );
+    }
+    else if( ext == "tif" || ext == "tiff" )
+    {
+        // Need to pass inputfile as well to copy the tiff-tags.
+        write_frames_to_tiff( outfile, stablizedFrames, infile );
+    }
 
     /*-----------------------------------------------------------------------------
      *  Write corrected video and non-corrected video to combined.
@@ -135,7 +142,7 @@ int main(int argc, char **argv)
         hconcat( frames[i], stablizedFrames[i], combined );
         combinedFrames.push_back( combined );
     }
-    write_frames_to_avi( combinedVideofileName, combinedFrames, fps );
+    write_frames_to_avi( combinedVideofileName, combinedFrames, 15.0 );
 
     return 0;
 }
