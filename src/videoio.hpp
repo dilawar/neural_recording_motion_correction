@@ -279,7 +279,7 @@ void write_frames_to_tiff ( const string& outfile
         TIFFSetField ( out, TIFFTAG_SAMPLESPERPIXEL, spp);
 
         TIFFGetField( in, TIFFTAG_BITSPERSAMPLE, &bpp );
-        TIFFSetField ( out, TIFFTAG_BITSPERSAMPLE, bpp );
+        TIFFSetField ( out, TIFFTAG_BITSPERSAMPLE, 8 );
 
         TIFFSetField ( out, TIFFTAG_ORIENTATION, ORIENTATION_BOTLEFT ); 
         TIFFSetField ( out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
@@ -292,7 +292,7 @@ void write_frames_to_tiff ( const string& outfile
         // Data type matching.
         unsigned char* row = frame.data;
         // See http://opencv-users.1802565.n2.nabble.com/Mat-class-with-unsigned-int-type-or-long-int-type-td7197221.html
-        for( size_t c = 0; c < height; c ++ )
+        for( uint16 c = 0; c < height; c ++ )
             TIFFWriteScanline( out, &row[c*width], c, 0);
             
         TIFFWriteDirectory( out );
