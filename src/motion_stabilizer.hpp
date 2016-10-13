@@ -65,9 +65,8 @@ struct Trajectory
 };
 
 
-template< typename pixal_type_t>
-void stabilize( vector< Mat_<pixal_type_t> >& frames
-        , vector<Mat_<pixal_type_t> >& result )
+void stabilize( vector< Mat >& frames
+        , vector<Mat >& result )
 {
     // For further analysis
 #ifdef DEBUG

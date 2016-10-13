@@ -58,8 +58,6 @@ int main(int argc, char **argv)
         return 0;
     }
 
-
-
     // Step 0. Prepare output file.
     string infile( argv[1] );                   /* Input file */
 
@@ -68,10 +66,10 @@ int main(int argc, char **argv)
     std::cout << "[INFO] Extenstion of file " << ext << std::endl;
 
     video_info_t vInfo;
-    vector< Mat_<unsigned char> > frames; 
+    vector< Mat > frames; 
     read_frames( infile, frames, vInfo );
 
-    vector< Mat_<unsigned char> > stablizedFrames;
+    vector< Mat > stablizedFrames;
     stabilize( frames, stablizedFrames );
     std::cout << "Corrected frames " << stablizedFrames.size() << std::endl;
 
@@ -90,7 +88,7 @@ int main(int argc, char **argv)
     /*-----------------------------------------------------------------------------
      *  Write corrected video and non-corrected video to combined.
      *-----------------------------------------------------------------------------*/
-    vector< Mat_<unsigned char> > combinedFrames;
+    vector< Mat > combinedFrames;
     string combinedVideofileName = "__combined.avi";
     for (size_t i = 0; i < stablizedFrames.size( ); i++) 
     {

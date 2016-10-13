@@ -10,14 +10,14 @@
 
 SET(OPENCV_COMPONENTS
 	calib3d
-        contrib
+        #contrib
 	core
 	features2d
 	flann
-        gpu
+        #gpu
 	highgui
 	imgproc
-        legacy
+        #legacy
 	ml
 	objdetect
 	ts
