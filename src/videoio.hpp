@@ -24,7 +24,7 @@
 #define FOURCC_CODEC CV_FOURCC( 'M', 'J', 'P', 'G' )
 //#define FOURCC_CODEC CV_FOURCC( 'L', 'A', 'G', 'S' )
 //
-#include <tiffio.h>
+#include "tinytiffreader.h"
 #include <opencv2/opencv.hpp>
 
 using namespace std;
@@ -38,6 +38,40 @@ typedef struct VideoInfo
     size_t numFrames = 0;
 } video_info_t;
 
+#if 0
+/**
+ * @brief Convert a 32bit pixal value from TIFF to 8 bit gray code.
+ *
+ * @param val 32 bit = 4 time 8 bit values (R, G, B, A).
+ *
+ * @return 
+ */
+template< typename T>
+T toGray( uint32 val, size_t bitPerSample )
+{
+    // Slice R, G, B, and A values.
+    if( bitPerSample == 4 )
+    {
+        T R, G, B;
+        R = ( val >> 0 ) & 0xFF;
+        G = ( val >> 8 ) & 0xFF;
+        B = ( val >> 16 ) & 0xFF;
+        //printf( "val: %ld, A = %d, B = %d, G = %d, R = %d\n", val, A, B, G, R );
+        //exit( 1 );
+        //unsigned int pixal = ceil( 0.2126 * R + 0.7152 * G + 0.0722 * B);
+        //return (uint8) pixal;
+        //return ( (R << 1) + (G << 1) + (B << 1) );
+        return R + G + B;
+    }
+    else if( bitPerSample == 8 )
+    {
+        T x, y;
+        x = (val >> 0 ) & 0xFFFF;
+        y = (val >> bitPerSample ) && 0xFFFF;
+        return x + y;
+    }
+}
+#endif
 
 /**
  * @brief  Read data from TIFF images are vector of opencv matrix.
@@ -53,39 +87,21 @@ void get_frames_from_tiff( const string& filename
         , video_info_t& vidInfo
         )
 {
-    TIFF *tif = TIFFOpen( filename.c_str(), "r");
+    TinyTIFFReaderFile* tif = TinyTIFFReader_open( filename.c_str() );
     if (tif) {
-        int dircount = 0;
-        do 
-        {
-            dircount++;
-            uint32 w, h;
-
-            TIFFGetField( tif, TIFFTAG_IMAGEWIDTH, &w);
-            TIFFGetField( tif, TIFFTAG_IMAGELENGTH, &h);
-            size_t npixals = w * h;
-
-            uint32* raster;
-            raster = ( uint32* ) _TIFFmalloc( npixals * sizeof( uint32 ));
-            if( NULL != raster )
-            {
-                if( TIFFReadRGBAImage( tif, w, h, raster, 0 ) )
-                {
-                    vidInfo.width = w;
-                    vidInfo.height = h;
-                    vidInfo.numFrames += 1;
-                    Mat image(h, w, CV_16U, raster );
-                    //Mat grey;
-                    //cvtColor( image, grey, CV_BGR2GRAY );
-                    frames.push_back( image ); 
-                }
-            }
-            _TIFFfree( raster );
-        } while (TIFFReadDirectory(tif));
+        do {
+            uint32_t width = TinyTIFFReader_getWidth( tif );
+            uint32_t height = TinyTIFFReader_getHeight( tif );
+            uint16_t* data = (uint16_t*) calloc( width*height, sizeof( uint16_t ) );
+            TinyTIFFReader_getSampleData( tif, data, 0 );
+            Mat frame(width, height, CV_16U, data);
+            frame.convertTo( frame, CV_8U, 1/8.0 );
+            //cout << frame << endl;
+            frames.push_back( frame );
+            free( data );
+        } while ( TinyTIFFReader_readNext( tif ) );
     }
-    cout << "[INFO] Read " << frames.size() << " frames from "
-        << filename << endl;
-    TIFFClose(tif);
+    TinyTIFFReader_close( tif );
 }
 
 template< typename pixal_type_t >
