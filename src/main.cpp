@@ -90,7 +90,7 @@ int main(int argc, char **argv)
     string::size_type pAt = infile.find_last_of('.');       
     string ext = infile.substr( pAt+1 );
     if( outfile.size() < 1 )
-        outfile = infile + "_corrected.avi";
+        outfile = infile + "_corrected." + ext;
 
     std::cout << "[DEBUG] In file " << infile  << std::endl;
     std::cout << "[DEBUG] Out file" << outfile << std::endl;

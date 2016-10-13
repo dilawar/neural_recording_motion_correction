@@ -9,7 +9,7 @@ include_directories( ${CMAKE_SOURCE_DIR}/external/tclap-1.2.1/include/ )
 
 add_definitions( -std=c++11 -Wall )
 
-set(CMAKE_BUILD_TYPE Release )
+set(CMAKE_BUILD_TYPE Debug )
 
 find_package( OPENCV REQUIRED 
     # COMPONENTS 

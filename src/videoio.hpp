@@ -137,7 +137,7 @@ void get_frames_from_tiff ( const string& filename
         }
     }
 
-#if 1
+#if 0
 
     for ( auto f : frames )
     {
@@ -247,74 +247,67 @@ void write_frames_to_tiff ( const string& outfile
     TIFF* out = TIFFOpen ( outfile.c_str(), "w" );
     TIFF* in = TIFFOpen( infile.c_str(), "r" );
 
+    if( ! out )
+    {
+        std::cout << "Can't open tiff file to open : " << outfile << std::endl;
+        return;
+    }
+
+    if( ! in )
+    {
+        std::cout << "Can't open " << infile << " for reading tags" << std::endl;
+        return;
+    }
+
+
     uint32 height, width;
     tsize_t sampleperpixel;
     tsize_t linebytes;
-
-    TIFFSetField ( out, TIFFTAG_IMAGEWIDTH
-            , TIFFGetField(in, TIFFTAG_IMAGEWIDTH)
-            ); 
-
-    TIFFSetField ( out, TIFFTAG_IMAGELENGTH
-            , TIFFGetField( in, TIFFTAG_IMAGELENGTH )
-            );
-
-    TIFFSetField ( out, TIFFTAG_SAMPLESPERPIXEL
-            , TIFFGetField( in, TIFFTAG_SAMPLESPERPIXEL )
-            );
-
-    TIFFSetField ( out, TIFFTAG_BITSPERSAMPLE
-            , TIFFGetField( in, TIFFTAG_BITSPERSAMPLE )
-            );
-            
-    TIFFSetField ( out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT ); 
-    TIFFSetField ( out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
-    TIFFSetField ( out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+    uint16 spp, bpp, photo, resUnit;
 
     // Close the infile.
     TIFFClose( in );
 
-    for (size_t i = 0; i < frames.size(); i++) 
+    for (uint16 frameNum = 0; frameNum < frames.size(); frameNum++) 
     {
-        sampleperpixel = TIFFGetField( out, TIFFTAG_SAMPLEFORMAT );
-        Mat frame = frames[i];
+        TIFFSetField( out, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
+        TIFFSetField( out, TIFFTAG_PAGENUMBER, frameNum, frames.size( ) );
+
+        TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &width);
+        TIFFSetField ( out, TIFFTAG_IMAGEWIDTH, width );
+
+
+        TIFFGetField( in, TIFFTAG_IMAGELENGTH, &height);
+        TIFFSetField ( out, TIFFTAG_IMAGELENGTH, height);
+
+        TIFFGetField( in, TIFFTAG_SAMPLESPERPIXEL, &spp );
+        TIFFSetField ( out, TIFFTAG_SAMPLESPERPIXEL, spp);
+
+        TIFFGetField( in, TIFFTAG_BITSPERSAMPLE, &bpp );
+        TIFFSetField ( out, TIFFTAG_BITSPERSAMPLE, bpp );
+
+        TIFFSetField ( out, TIFFTAG_ORIENTATION, ORIENTATION_BOTLEFT ); 
+        TIFFSetField ( out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
+        TIFFSetField ( out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+
+        Mat frame = frames[frameNum];
         width = frame.cols;
         height = frame.rows;
-        linebytes = sampleperpixel * width;
-
-        unsigned char * buf = NULL;
-
-        if( TIFFScanlineSize(out) * linebytes)
-            buf = (unsigned char*) _TIFFmalloc( linebytes );
-        else
-            buf = (unsigned char*) _TIFFmalloc( TIFFScanlineSize(out) );
 
         // We set the strip size of the file to be size of one row of pixels
-        TIFFSetField(out, TIFFTAG_ROWSPERSTRIP
-                , TIFFDefaultStripSize(out, width*sampleperpixel)
-                );
+        //TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, TIFFDefaultStripSize(out, width*spp));
 
         // Data type matching.
-        uint32* row;
+        unsigned char* row = frame.data;
         // See http://opencv-users.1802565.n2.nabble.com/Mat-class-with-unsigned-int-type-or-long-int-type-td7197221.html
-        frame.convertTo( frame, CV_32S );
-        for( size_t j = 0; j < frames[i].rows; j ++ )
-        {
-            row = (uint32*) malloc( width * sizeof( uint32 ) );
-            for( size_t ri = 0; ri < width; ri ++ )
-                row[ri] = (uint32) frame.at<uint32>(j, ri);
-
-            if( TIFFWriteScanline( out, row, j, 0 ) <  0)
-                break;
-
-            free( row );
-        }
-        
+        for( size_t c = 0; c < frame.cols; c ++ )
+            TIFFWriteScanline( out, &row[c*frame.rows], c, 0);
+            
         TIFFWriteDirectory( out );
     }
 
-
-
+    TIFFClose( out );
+    std::cout << "[INFO] Wrote corrected frames to " << outfile << std::endl;
 }
 
 #endif   /* ----- #ifndef videoio_INC  ----- */
