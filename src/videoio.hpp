@@ -45,14 +45,11 @@ typedef struct VideoInfo
  *
  * @return 
  */
-template< typename T = uchar >
-T toGray( uint32 val )
+uint16  toGray( uint32 val )
 {
-    T r,g,b;
-    r = (T)TIFFGetR( val ); g = (T)TIFFGetG( val ); b = (T) TIFFGetB( val );
-    printf( "r %u, g %u, b %u, a %u \n", r, g, b, TIFFGetA( val ) );
-    T grey = r * r + g * g + b * b;
-    return grey;
+    // Drop last 8 bits. They are useless.
+    val = val & 0x0000FFFF;
+    return (uint16)val;
 }
 
 /**
@@ -68,7 +65,8 @@ void get_frames_from_tiff( const string& filename
         , video_info_t& vidInfo
         )
 {
-#ifdef LIBTIFF
+
+#ifdef USE_LIBTIFF
     TIFF *tif = TIFFOpen( filename.c_str(), "r");
     if (tif) 
     {
@@ -94,15 +92,26 @@ void get_frames_from_tiff( const string& filename
             {
                 if( TIFFReadRGBAImage( tif, w, h, raster, 0 )  )
                 {
-                    Mat frame(w, h, CV_8U, raster );
+                    
+#define READ_INVIVIDUAL_VALUES
+#ifdef  READ_INVIVIDUAL_VALUES
+                    Mat frame(w, h, CV_16U);
                     for (size_t i = 0; i < w; i++) 
                         for (size_t ii = 0; ii < h; ii++) 
-                            frame.at<unsigned char>(i, ii) = toGray<uchar>( raster[i*h+ii]);
+                            frame.at<uint16_t>(i, ii) = toGray( raster[i*h+ii]);
+
+                    // Rescale to 0 to 255.
+                    frame.convertTo( frame, CV_8U, 1.0/32 );
+
+#else      /* -----  not READ_INVIVIDUAL_VALUES  ----- */
+
+                    Mat frame( w, h, CV_16U, raster );
+
+#endif     /* -----  not READ_INVIVIDUAL_VALUES  ----- */
+
                     cout << frame.cols << " " << frame.rows << endl;
-                    //cout << endl << "====== " << endl;
-                    //cout << frame;
-                    imshow( "frame", frame );
-                    waitKey( 50 );
+                    cout << endl << "====== " << endl;
+                    cout << frame;
                     frames.push_back( frame );
                 }
 
@@ -114,9 +123,29 @@ void get_frames_from_tiff( const string& filename
 #else 
     imreadmulti( String( filename.c_str() )
             , frames
-            , IMREAD_GRAYSCALE
+            , IMREAD_ANYDEPTH
             );
-    std::cout << "Read " << frames.size() << " from " << filename << std::endl;
+
+    double maxPixalValue = 0;
+    double minVal , maxVal;
+    Point minLoc, maxLoc;
+    for (size_t i = 0; i < frames.size(); i++) 
+    {
+        minMaxLoc( frames[i], &minVal, &maxVal, &minLoc, &maxLoc );
+        if( maxVal > maxPixalValue )
+            maxPixalValue = maxVal;
+    }
+
+    // Now rescale every frame to get the value between 0 and 255.
+    if( maxPixalValue > 255.0 )
+    {
+        for (size_t i = 0; i < frames.size(); i++) 
+        {
+            Mat frame = frames[i];
+            frame.convertTo( frame, CV_8U, 255.0 / maxPixalValue );
+            frames[i] = frame;
+        }
+    }
 #endif
 }
 
