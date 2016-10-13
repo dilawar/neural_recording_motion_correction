@@ -6,6 +6,7 @@ set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
     )
 
 #add_subdirectory( ${CMAKE_SOURCE_DIR}/external/TinyTIFF/ )
+include_directories( ${CMAKE_SOURCE_DIR}/external/tclap-1.2.1/include/ )
 
 add_definitions( -std=c++11 -Wall )
 

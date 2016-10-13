@@ -47,24 +47,73 @@ Modification log:
 #include <fstream>
 #include "videoio.hpp"
 #include "motion_stabilizer.hpp"
+#include "tclap/CmdLine.h"
+
 
 
 using namespace std;
 using namespace cv;
 
+static bool verbose_flag_ = false;
+
 int main(int argc, char **argv)
 {
-    if(argc < 3) {
-        cout << "./videostab input_file" << endl;
-        return 0;
+    /*-----------------------------------------------------------------------------
+     *  Command line options.
+     *-----------------------------------------------------------------------------*/
+    string infile;
+    string outfile;
+    size_t numPasses = 1;
+
+    try {  
+
+        TCLAP::CmdLine cmd("Utility to stabilize video.", ' ', "0.1.0");
+        TCLAP::ValueArg<std::string> inputArg("i"
+                ,"input" ,"Input file (tif or avi)"
+                ,true ,"" ,"file path"
+                );
+        cmd.add( inputArg );
+
+        TCLAP::ValueArg<std::string> outputArg("o"
+                , "output" , "path to save corrected file (tif or avi)"
+                , false ,"" ,"file path"
+                );
+        cmd.add( outputArg );
+
+        TCLAP::ValueArg<size_t> numpassArg ("n"
+                , "num-passes" , "Number of passes to perform to stabilize video."
+                " (default 2). Increase this number for better result."
+                , false , 2 , "postitive integer"
+                );
+        cmd.add( numpassArg );
+
+        TCLAP::SwitchArg verbose("v", "verbose", "Make output verbose", cmd, false);
+
+        cmd.parse( argc, argv );
+
+        infile = inputArg.getValue();
+        outfile = outputArg.getValue( );
+        numPasses = numpassArg.getValue( );
+        verbose_flag_ = verbose.getValue( );
+
+    } 
+    catch (TCLAP::ArgException &e)
+    { 
+        std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; 
     }
 
-    // Step 0. Prepare output file.
-    string infile( argv[1] );                   /* Input file */
+    /*-----------------------------------------------------------------------------
+     *  All right, command line options are parsed. Make sure when output file
+     *  name is not set we set a default output file name.
+     *-----------------------------------------------------------------------------*/
 
     string::size_type pAt = infile.find_last_of('.');       
     string ext = infile.substr( pAt+1 );
-    std::cout << "[INFO] Extenstion of file " << ext << std::endl;
+    if( outfile.size() < 1 )
+        outfile = infile + "_corrected.avi";
+
+    std::cout << "[DEBUG] In file " << infile  << std::endl;
+    std::cout << "[DEBUG] Out file" << outfile << std::endl;
 
     video_info_t vInfo;
     vector< Mat > frames; 
@@ -74,7 +123,6 @@ int main(int argc, char **argv)
      *  Some time multiple passes are neccessary to correct the data.
      *-----------------------------------------------------------------------------*/
     auto initFrames = frames;
-    size_t numPasses = 3;
     vector< Mat > stablizedFrames;
     for (size_t i = 0; i < numPasses - 1 ; i++) 
     {
@@ -91,15 +139,10 @@ int main(int argc, char **argv)
 
 
     /*-----------------------------------------------------------------------------
-     *  Write results to files.
-     *-----------------------------------------------------------------------------*/
-
-    /*-----------------------------------------------------------------------------
      * Write corrected video to a avi file.
      *-----------------------------------------------------------------------------*/
     double fps = 15.0;
-    write_frames_to_avi( string(argv[2]), frames, fps );
-
+    write_frames_to_avi( outfile, stablizedFrames, fps );
 
     /*-----------------------------------------------------------------------------
      *  Write corrected video and non-corrected video to combined.

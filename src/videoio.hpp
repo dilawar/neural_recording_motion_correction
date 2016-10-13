@@ -206,7 +206,6 @@ void read_frames( const string& filename
 
 }
 
-
 void write_frames_to_avi( const string& avifile
         , vector< Mat > frames 
         , double fps
