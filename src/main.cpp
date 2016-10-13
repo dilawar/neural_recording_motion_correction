@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Modification log:
 
     Wed 12 Oct 2016 10:59:23 AM IST , Dilawar Singh
+
         - Compiled with opencv-3 on openSUSE-Tumbleweed.
         - Added CMake support.
         - Added tiff support.
@@ -54,7 +55,7 @@ using namespace cv;
 int main(int argc, char **argv)
 {
     if(argc < 3) {
-        cout << "./videostab input_file output_file" << endl;
+        cout << "./videostab input_file" << endl;
         return 0;
     }
 
@@ -69,8 +70,23 @@ int main(int argc, char **argv)
     vector< Mat > frames; 
     read_frames( infile, frames, vInfo );
 
+    /*-----------------------------------------------------------------------------
+     *  Some time multiple passes are neccessary to correct the data.
+     *-----------------------------------------------------------------------------*/
+    auto initFrames = frames;
+    size_t numPasses = 3;
     vector< Mat > stablizedFrames;
-    stabilize( frames, stablizedFrames );
+    for (size_t i = 0; i < numPasses - 1 ; i++) 
+    {
+        std::cout << "[INFO] Running pass " << i + 1 <<  " out of " << numPasses 
+            << std::endl;
+        stabilize( initFrames, stablizedFrames );
+        initFrames = stablizedFrames;
+        stablizedFrames.clear( );
+    }
+
+    std::cout << "[INFO] Final pass " << endl;
+    stabilize( initFrames, stablizedFrames );
     std::cout << "Corrected frames " << stablizedFrames.size() << std::endl;
 
 
