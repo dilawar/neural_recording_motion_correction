@@ -26,7 +26,7 @@ const int SMOOTHING_RADIUS = 50;
 
 // In pixels. Crops the border to reduce the black borders from stabilisation
 // being too noticeable.
-const int HORIZONTAL_BORDER_CROP = 20;
+const int HORIZONTAL_BORDER_CROP = 10;
 
 // 1. Get previous to current frame transformation (dx, dy, da) for all frames
 // 2. Accumulate the transformations to get the image trajectory
@@ -87,34 +87,32 @@ void stabilize( vector< Mat_<pixal_type_t> >& frames
         prevGrey = frames[k-1];
         curGrey = frames[k];
         // vector from prev to cur
-        vector <Point2f> prev_corner, cur_corner;
-        vector <Point2f> prev_corner2, cur_corner2;
+        vector <Point2f> prevCorner, curCorner;
+        vector <Point2f> prevCorner2, curCorner2;
         vector <uchar> status;
         vector <float> err;
 
-        goodFeaturesToTrack(prevGrey, prev_corner, 200, 0.01, 30);
-        calcOpticalFlowPyrLK(prevGrey, curGrey, prev_corner, cur_corner, status, err);
+        goodFeaturesToTrack(prevGrey, prevCorner, 200, 0.01, 30);
+        calcOpticalFlowPyrLK(prevGrey, curGrey, prevCorner, curCorner, status, err);
 
         // weed out bad matches
         for(size_t i=0; i < status.size(); i++)
         {
             if(status[i])
             {
-                prev_corner2.push_back(prev_corner[i]);
-                cur_corner2.push_back(cur_corner[i]);
+                prevCorner2.push_back(prevCorner[i]);
+                curCorner2.push_back(curCorner[i]);
             }
         }
 
         // translation + rotation only
         // false = rigid transform, no scaling/shearing
-        Mat T = estimateRigidTransform(prev_corner2, cur_corner2, false);
+        Mat T = estimateRigidTransform(prevCorner2, curCorner2, false);
 
         // in rare cases no transform is found. We'll just use the last known
         // good transform.
         if(T.data == NULL)
-        {
             last_T.copyTo(T);
-        }
 
         T.copyTo(last_T);
 
@@ -134,7 +132,7 @@ void stabilize( vector< Mat_<pixal_type_t> >& frames
 
 #ifdef DBEUG
         cout << "[DEBUG] Frame: " << k << "/" << frames.size()
-            << " - good optical flow: " << prev_corner2.size() << endl;
+            << " - good optical flow: " << prevCorner2.size() << endl;
 #endif 
 
     }
@@ -153,7 +151,6 @@ void stabilize( vector< Mat_<pixal_type_t> >& frames
         x += prev_to_cur_transform[i].dx;
         y += prev_to_cur_transform[i].dy;
         a += prev_to_cur_transform[i].da;
-
         trajectory.push_back(Trajectory(x,y,a));
 
 #ifdef DEBUG
@@ -171,7 +168,7 @@ void stabilize( vector< Mat_<pixal_type_t> >& frames
         double sum_a = 0;
         int count = 0;
 
-        for(int j=-SMOOTHING_RADIUS; j <= SMOOTHING_RADIUS; j++)
+        for(int j = -SMOOTHING_RADIUS; j <= SMOOTHING_RADIUS; j++)
         {
             if(i+j >= 0 && i+j < trajectory.size())
             {
