@@ -259,14 +259,10 @@ void write_frames_to_tiff ( const string& outfile
         return;
     }
 
-
     uint32 height, width;
     tsize_t sampleperpixel;
     tsize_t linebytes;
     uint16 spp, bpp, photo, resUnit;
-
-    // Close the infile.
-    TIFFClose( in );
 
     for (uint16 frameNum = 0; frameNum < frames.size(); frameNum++) 
     {
@@ -275,7 +271,6 @@ void write_frames_to_tiff ( const string& outfile
 
         TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &width);
         TIFFSetField ( out, TIFFTAG_IMAGEWIDTH, width );
-
 
         TIFFGetField( in, TIFFTAG_IMAGELENGTH, &height);
         TIFFSetField ( out, TIFFTAG_IMAGELENGTH, height);
@@ -291,21 +286,20 @@ void write_frames_to_tiff ( const string& outfile
         TIFFSetField ( out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
 
         Mat frame = frames[frameNum];
-        width = frame.cols;
-        height = frame.rows;
-
         // We set the strip size of the file to be size of one row of pixels
         //TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, TIFFDefaultStripSize(out, width*spp));
 
         // Data type matching.
         unsigned char* row = frame.data;
         // See http://opencv-users.1802565.n2.nabble.com/Mat-class-with-unsigned-int-type-or-long-int-type-td7197221.html
-        for( size_t c = 0; c < frame.cols; c ++ )
-            TIFFWriteScanline( out, &row[c*frame.rows], c, 0);
+        for( size_t c = 0; c < height; c ++ )
+            TIFFWriteScanline( out, &row[c*width], c, 0);
             
         TIFFWriteDirectory( out );
     }
 
+    // Close the infile.
+    TIFFClose( in );
     TIFFClose( out );
     std::cout << "[INFO] Wrote corrected frames to " << outfile << std::endl;
 }
