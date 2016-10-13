@@ -88,10 +88,10 @@ void get_frames_from_tiff ( const string& filename
             {
                 if ( TIFFReadRGBAImage ( tif, w, h, raster, 0 )  )
                 {
-                    Mat frame ( w, h, CV_16U );
+                    Mat frame ( h, w, CV_16U );
                     for (size_t i = 0; i < h; i++) 
                         for (size_t ii = 0; ii < w; ii++) 
-                            frame.at<uint16>(i, ii) = (uint16)( raster[i*w+ii] & 0x0000FFFF );
+                            frame.at<uint16>(i, ii) = (uint16)( raster[i*w+ii]); 
                     frames.push_back ( frame );
                 }
             }
@@ -99,60 +99,6 @@ void get_frames_from_tiff ( const string& filename
         while ( TIFFReadDirectory ( tif ) );
     }
     TIFFClose ( tif );
-
-#elif USE_TINYTIFF
-
-    TinyTIFFReaderFile* tiffr = NULL;
-    tiffr = TinyTIFFReader_open ( filename.c_str() );
-
-    if ( !tiffr )
-    {
-        std::cerr <<
-                  "[ERROR] reading (not existent, not accessible or no TIFF file)"
-                  << endl;
-    }
-    else
-    {
-        if ( TinyTIFFReader_wasError ( tiffr ) )
-            std::cerr << "[ERR] " << TinyTIFFReader_getLastError ( tiffr ) << endl;
-
-        uint32_t nframes = TinyTIFFReader_countFrames ( tiffr );
-
-        if ( TinyTIFFReader_wasError ( tiffr ) )
-            std::cout << "[ERROR] " << TinyTIFFReader_getLastError ( tiffr ) << endl;
-
-        uint32_t totalReadFrames = 0;
-
-        do
-        {
-            uint32_t width = TinyTIFFReader_getWidth ( tiffr );
-            uint32_t height = TinyTIFFReader_getHeight ( tiffr );
-            bool ok = true;
-
-            if ( width > 0 && height > 0 ) 
-            {
-                totalReadFrames++;
-                uint16_t* image = ( uint16_t* ) calloc ( width * height, sizeof ( uint16_t ) );
-                TinyTIFFReader_getSampleData ( tiffr, image, 0 );
-
-                if ( TinyTIFFReader_wasError ( tiffr ) )
-                {
-                    std::cout << "[ERROR] " << TinyTIFFReader_getLastError ( tiffr )
-                              << endl;
-                    continue;
-                }
-
-                Mat grey ( width, height, CV_16U, image );
-                frames.push_back ( grey );
-                free ( image );
-            }
-        }
-        while ( TinyTIFFReader_readNext ( tiffr ) ); // iterate over all frames
-
-        std::cout << " [INFO] Read " << totalReadFrames << " frames" << endl;
-    }
-
-    TinyTIFFReader_close ( tiffr );
 
 #else
     imreadmulti ( String ( filename.c_str() )
@@ -172,7 +118,6 @@ void get_frames_from_tiff ( const string& filename
     for ( size_t i = 0; i < frames.size(); i++ )
     {
         minMaxLoc ( frames[i], &minVal, &maxVal, &minLoc, &maxLoc );
-
         if ( maxVal > maxPixalValue )
             maxPixalValue = maxVal;
     }
