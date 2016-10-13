@@ -38,3 +38,9 @@ Will print the help message on how to use the application.
 # Contact 
 
 Email to dilawars@ncbs.res.in
+
+# Credits 
+
+- [Nghia Ho](http://nghiaho.com/?p=2093) for making the algorithm available on
+  his blog. This application is build around it.
+- Good people at stackoverflow.com
