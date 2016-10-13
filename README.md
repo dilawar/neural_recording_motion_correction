@@ -9,18 +9,16 @@ See the demo [here on youtube](https://youtu.be/vGjIFvzOOQ8).
 
 # Build and install 
 
-```
-$ git clone https://github.com/dilawar/video_stabilizer 
-$ cd video_stabilizer 
-$ cmake .
-$ make 
-$ sudo make install
+    $ git clone https://github.com/dilawar/video_stabilizer 
+    $ cd video_stabilizer 
+    $ cmake .
+    $ make 
+    $ sudo make install
 
 # Usage 
 
-```
-$ videostab -h 
-```
+    $ videostab -h 
+
 Will print the help message on how to use the application.
 
 # Supported formats 
@@ -44,3 +42,7 @@ Email to dilawars@ncbs.res.in
 - [Nghia Ho](http://nghiaho.com/?p=2093) for making the algorithm available on
   his blog. This application is build around it.
 - Good people at stackoverflow.com
+
+# TODO
+
+- User manual 
