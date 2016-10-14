@@ -11,13 +11,9 @@ add_definitions( -std=c++11 -Wall )
 
 set(CMAKE_BUILD_TYPE Debug )
 
-find_package( OPENCV REQUIRED 
-    # COMPONENTS 
-    # core highgui imgproc calib3d 
-    # video
-    # # This is required for opencv3.
-    # videoio
-    )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIR} )
+
 # Either use LIBTIFF or TINYTIFF.
 find_package( TIFF REQUIRED )
 add_definitions( -DUSE_LIBTIFF )
@@ -30,7 +26,8 @@ add_executable(videostab
 
 target_link_libraries( videostab  
     ${TIFF_LIBRARIES}
-    ${OPENCV_LIBRARIES}
+    #${OPENCV_LIBRARIES}
+    ${OpenCV_LIBS}
     )
 
 install( TARGETS videostab 

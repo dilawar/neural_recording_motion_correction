@@ -114,12 +114,11 @@ if(EXISTS "${OpenCV_DIR}")
 
       endif(NOT EXISTS ${VERSION_FILE_DIR})
 
-      #file(STRINGS ${OpenCV_INCLUDE_DIR}/cvver.h OpenCV_VERSIONS_TMP REGEX "^#define CV_[A-Z]+_VERSION[ \t]+[0-9]+$")
-      file(STRINGS ${VERSION_FILE} OpenCV_VERSIONS_TMP REGEX "^#define CV_[A-Z]+_VERSION[ \t]+[0-9]+$")
+      file(STRINGS ${VERSION_FILE} OpenCV_VERSIONS_TMP REGEX "^#define CV_VERSION.*$")
 
-      string(REGEX REPLACE ".*#define CV_MAJOR_VERSION[ \t]+([0-9]+).*" "\\1" OpenCV_VERSION_MAJOR ${OpenCV_VERSIONS_TMP})
-      string(REGEX REPLACE ".*#define CV_MINOR_VERSION[ \t]+([0-9]+).*" "\\1" OpenCV_VERSION_MINOR ${OpenCV_VERSIONS_TMP})
-      string(REGEX REPLACE ".*#define CV_SUBMINOR_VERSION[ \t]+([0-9]+).*" "\\1" OpenCV_VERSION_PATCH ${OpenCV_VERSIONS_TMP})
+      string(REGEX REPLACE ".*#define CV_VERSION_EPOCH[ \t]+([0-9]+).*" "\\1" OpenCV_VERSION_MAJOR ${OpenCV_VERSIONS_TMP})
+      string(REGEX REPLACE ".*#define CV_VERSION_MINOR[ \t]+([0-9]+).*" "\\1" OpenCV_VERSION_MINOR ${OpenCV_VERSIONS_TMP})
+      string(REGEX REPLACE ".*#define CV_VERSION_MAJOR[ \t]+([0-9]+).*" "\\1" OpenCV_VERSION_PATCH ${OpenCV_VERSIONS_TMP})
       set(OpenCV_VERSION ${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.${OpenCV_VERSION_PATCH} CACHE STRING "" FORCE)
 
       if(WIN32 OR NOT PKG_CONFIG_FOUND)
@@ -132,7 +131,9 @@ if(EXISTS "${OpenCV_DIR}")
     endif(NOT EXISTS ${VERSION_FILE_DIR})
 
     if(${OpenCV_VERSION} VERSION_GREATER 2.1.0)
-      set(OPENCV_LIB_COMPONENTS calib3d contrib core features2d flann gpu highgui imgproc legacy ml objdetect video)
+      set(OPENCV_LIB_COMPONENTS 
+          calib3d contrib core features2d flann gpu highgui imgproc legacy ml objdetect video
+          )
 
       #Add parent directory of ${OpenCV_INCLUDE_DIR} to ${OpenCV_INCLUDE_DIR} itself
       #to be able to do both
@@ -157,24 +158,27 @@ if(EXISTS "${OpenCV_DIR}")
 
     ## Loop over each components
     foreach(__CVLIB ${OPENCV_LIB_COMPONENTS})
+        find_library(OpenCV_${__CVLIB}_LIBRARY_DEBUG 
+            NAMES 
+                "${__CVLIB}${CVLIB_SUFFIX}d" 
+                "lib${__CVLIB}${CVLIB_SUFFIX}d" 
+            PATHS "${OpenCV_DIR}/lib" 
+            )
+        find_library(OpenCV_${__CVLIB}_LIBRARY_RELEASE 
+            NAMES "${__CVLIB}${CVLIB_SUFFIX}"
+                "lib${__CVLIB}${CVLIB_SUFFIX}" 
+                "opencv_${__CVLIB}${CVLIB_SUFFIX}"
+                "opencv_${__CVLIB}" "${__CVLIB}" 
+            PATHS "${OpenCV_DIR}/lib" 
+            )
+        #message( STATUS " -- ${OpenCV_${__CVLIB}_LIBRARY_RELEASE}" )
 
-      find_library(OpenCV_${__CVLIB}_LIBRARY_DEBUG NAMES "${__CVLIB}${CVLIB_SUFFIX}d" "lib${__CVLIB}${CVLIB_SUFFIX}d" PATHS "${OpenCV_DIR}/lib" NO_DEFAULT_PATH)
-      find_library(OpenCV_${__CVLIB}_LIBRARY_RELEASE NAMES "${__CVLIB}${CVLIB_SUFFIX}" "lib${__CVLIB}${CVLIB_SUFFIX}" "opencv_${__CVLIB}${CVLIB_SUFFIX}" "opencv_${__CVLIB}" "${__CVLIB}" PATHS "${OpenCV_DIR}/lib" NO_DEFAULT_PATH)
-      
-      #On MacOSX libraries are named:  libopencv_${__CVLIB}${CVLIB_SUFFIX}.dylib
-      #On Linux libraries are named:  libopencv_${__CVLIB}.so${CVLIB_SUFFIX}
-      # but with pkg-config ${OPENCV_LIB_COMPONENTS} are already prefixed with opencv_ ?
+        #Remove the cache value
+        set(OpenCV_${__CVLIB}_LIBRARY "" CACHE STRING "" FORCE)
 
-      #we add: "opencv_${__CVLIB}${CVLIB_SUFFIX}" for MacOSX
-      #we add: "${__CVLIB}" for linux (but version is not checked !)
-      
-      
-      #Remove the cache value
-      set(OpenCV_${__CVLIB}_LIBRARY "" CACHE STRING "" FORCE)
-      
-      #both debug/release
-      if(OpenCV_${__CVLIB}_LIBRARY_DEBUG AND OpenCV_${__CVLIB}_LIBRARY_RELEASE)
-        set(OpenCV_${__CVLIB}_LIBRARY debug ${OpenCV_${__CVLIB}_LIBRARY_DEBUG} optimized ${OpenCV_${__CVLIB}_LIBRARY_RELEASE}  CACHE STRING "" FORCE)
+        #both debug/release
+        if(OpenCV_${__CVLIB}_LIBRARY_DEBUG AND OpenCV_${__CVLIB}_LIBRARY_RELEASE)
+            set(OpenCV_${__CVLIB}_LIBRARY debug ${OpenCV_${__CVLIB}_LIBRARY_DEBUG} optimized ${OpenCV_${__CVLIB}_LIBRARY_RELEASE}  CACHE STRING "" FORCE)
 
         #only debug
       elseif(OpenCV_${__CVLIB}_LIBRARY_DEBUG)
