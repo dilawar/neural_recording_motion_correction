@@ -24,9 +24,15 @@
 #include <tiffio.h>
 #include <opencv2/opencv.hpp>
 
+
 using namespace std;
 using namespace cv;
 #define FOURCC_CODEC_DEFAULT CV_FOURCC( 'M', 'J', 'P', 'G' )
+
+// Convert a string to lowercase.
+// FIXME: Only works for ASCII.
+#define STRTOLOWER(x) std::transform (x.begin(), x.end(), x.begin(), ::tolower)
+
 typedef struct VideoInfo
 {
     size_t width = 0;
