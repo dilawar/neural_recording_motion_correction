@@ -24,7 +24,7 @@
 #include <cassert>
 #include <cmath>
 #include <fstream>
-#include "videoio.hpp"
+#include "videoio.h"
 #include "motion_stabilizer.hpp"
 #include "tclap/CmdLine.h"
 
@@ -118,31 +118,30 @@ int main(int argc, char **argv)
     std::cout << "Corrected frames " << stablizedFrames.size() << std::endl;
 
     /*-----------------------------------------------------------------------------
-     * Write corrected video to a avi or tiff files.
+     * Write corrected video to output file. Use the format, fps and codec
+     * similar to input file. 
+     * 
+     * FIXME: Currently output is only gray-scale.
      *-----------------------------------------------------------------------------*/
-    if( ext == "avi" )
-    {
-        double fps = 15.0;
-        write_frames_to_avi( outfile, stablizedFrames, fps );
-    }
-    else if( ext == "tif" || ext == "tiff" )
-    {
-        // Need to pass inputfile as well to copy the tiff-tags.
-        write_frames_to_tiff( outfile, stablizedFrames, infile );
-    }
+    write_frames( outfile, stablizedFrames, infile);
 
-    /*-----------------------------------------------------------------------------
-     *  Write corrected video and non-corrected video to combined.
-     *-----------------------------------------------------------------------------*/
-    vector< Mat > combinedFrames;
-    string combinedVideofileName = "__combined.avi";
-    for (size_t i = 0; i < stablizedFrames.size( ); i++) 
+    if( verbose_flag_ )
     {
-        Mat combined;
-        hconcat( frames[i], stablizedFrames[i], combined );
-        combinedFrames.push_back( combined );
+        /*-----------------------------------------------------------------------------
+         *  Optional:
+         *
+         *  Write corrected video and non-corrected video to combined.
+         *-----------------------------------------------------------------------------*/
+        vector< Mat > combinedFrames;
+        string combinedVideofileName = "__combined.avi";
+        for (size_t i = 0; i < stablizedFrames.size( ); i++) 
+        {
+            Mat combined;
+            hconcat( frames[i], stablizedFrames[i], combined );
+            combinedFrames.push_back( combined );
+        }
+        write_frames( combinedVideofileName, combinedFrames, infile );
     }
-    write_frames_to_avi( combinedVideofileName, combinedFrames, 15.0 );
 
     return 0;
 }

@@ -23,7 +23,10 @@ find_package( TIFF REQUIRED )
 add_definitions( -DUSE_LIBTIFF )
 
 
-add_executable(videostab src/main.cpp)
+add_executable(videostab 
+    src/main.cpp
+    src/videoio.cpp
+    )
 
 target_link_libraries( videostab  
     ${TIFF_LIBRARIES}
