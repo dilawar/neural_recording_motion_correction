@@ -207,7 +207,11 @@ void write_frames(
 
     // Now file type is determined, use opencv to get fps and fourcc codec from file.
     VideoCapture in( infile );
+#ifdef USE_OPENCV3
     double fps = in.get( CAP_PROP_FPS );        /* Get frame rate */
+#else
+    double fps = in.get( CV_CAP_PROP_FPS );
+#endif
     if( fps < 1.0 )
     {
         std::cout << "[WARN] I could not determine frame rate from input file."
@@ -215,7 +219,12 @@ void write_frames(
         fps = 15.0;
     }
 
-    double fourcc = in.get( CAP_PROP_FOURCC );
+#ifdef USE_OPENCV3
+    int fourcc = in.get( CAP_PROP_FOURCC );
+#else 
+    int fourcc = in.get( CV_CAP_PROP_FOURCC );
+#endif 
+
     std::cout << "[DEBUG] Got codec " << fourcc << std::endl;
     if( fourcc == 0 )
     {
@@ -279,9 +288,7 @@ void write_frames_to_tiff ( const string& outfile
     }
 
     uint32 height, width;
-    tsize_t sampleperpixel;
-    tsize_t linebytes;
-    uint16 spp, bpp, photo, resUnit;
+    uint16 spp, bpp;
 
     for (uint16 frameNum = 0; frameNum < frames.size(); frameNum++) 
     {

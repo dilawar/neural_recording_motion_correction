@@ -13,6 +13,11 @@ set(CMAKE_BUILD_TYPE Debug )
 
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIR} )
+if(OpenCV_VERSION VERSION_GREATER 3.0.0 )
+    add_definitions( -DUSE_OPENCV3 )
+else()
+    add_definitions( -DUSE_OPENCV2 )
+endif()
 
 # Either use LIBTIFF or TINYTIFF.
 find_package( TIFF REQUIRED )
