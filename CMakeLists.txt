@@ -10,12 +10,8 @@ include_directories( ${CMAKE_SOURCE_DIR}/external/tclap-1.2.1/include/ )
 add_definitions( -std=c++11 -Wall )
 
 set(CMAKE_BUILD_TYPE Debug )
-#find_package(PkgConfig)
-#if(NOT PKG_CONFIG_FOUND)
+
 find_package( OpenCV REQUIRED )
-#else( )
-    #pkg_check_modules(OpenCV REQUIRED opencv )
-#endif( )
 
 include_directories( ${OpenCV_INCLUDE_DIR} )
 if(OpenCV_VERSION VERSION_GREATER 3.0.0 )
@@ -36,9 +32,7 @@ add_executable(videostab
 
 target_link_libraries( videostab  
     ${TIFF_LIBRARIES}
-    #${OpenCV_LDFLAGS}
-    #${OpenCV_LIBRARIES}
-    ${OpenCV_LIBS}
+    ${OpenCV_LIBRARIES}
     )
 
 
