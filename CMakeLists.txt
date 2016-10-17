@@ -30,6 +30,8 @@ add_executable(videostab
     src/videoio.cpp
     )
 
+#message( STATUS "Found following libraries ${OpenCV_LIBRARIES}" )
+
 target_link_libraries( videostab  
     ${TIFF_LIBRARIES}
     ${OpenCV_LIBRARIES}
