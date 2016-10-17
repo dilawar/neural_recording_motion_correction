@@ -1,7 +1,5 @@
 # Video Stabilizer 
 
-__Currently this repository is unstable__
-
 See the demo [here on youtube](https://youtu.be/vGjIFvzOOQ8).
 
 # Dependencies 
