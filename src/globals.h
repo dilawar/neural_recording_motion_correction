@@ -19,6 +19,13 @@
 #ifndef  globals_INC
 #define  globals_INC
 
+#include <string>
+#include <vector>
+#include <opencv2/opencv.hpp>
+
+using namespace std;
+using namespace cv;
+
 extern bool verbose_flag_;
 
 #endif   /* ----- #ifndef globals_INC  ----- */

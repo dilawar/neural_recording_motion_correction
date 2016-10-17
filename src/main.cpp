@@ -25,7 +25,7 @@
 #include <cmath>
 #include <fstream>
 #include "videoio.h"
-#include "motion_stabilizer.hpp"
+#include "stablizer.h"
 #include "tclap/CmdLine.h"
 
 #include "globals.h"                            /* verbose_flag_ is defined here 

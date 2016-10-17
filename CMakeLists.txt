@@ -29,6 +29,7 @@ add_executable(videostab
     src/main.cpp
     src/videoio.cpp
     src/globals.cpp
+    src/stablizer.cpp
     )
 
 #message( STATUS "Found following libraries ${OpenCV_LIBRARIES}" )
