@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 
     } 
     catch (TCLAP::ArgException &e)
-    { 
+    {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; 
     }
 
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
         outfile = infile + "_corrected." + ext;
 
     std::cout << "[DEBUG] In file " << infile  << std::endl;
-    std::cout << "[DEBUG] Out file" << outfile << std::endl;
+    std::cout << "[DEBUG] Out file " << outfile << std::endl;
 
     video_info_t vInfo;
     vector< Mat > frames; 
@@ -104,17 +104,17 @@ int main(int argc, char **argv)
      *-----------------------------------------------------------------------------*/
     auto initFrames = frames;
     vector< Mat > stablizedFrames;
-    for (size_t i = 0; i < numPasses - 1 ; i++) 
+    for (size_t i = 0; i < numPasses  ; i++) 
     {
+        stablizedFrames.clear( );
         std::cout << "[INFO] Running pass " << i + 1 <<  " out of " << numPasses 
             << std::endl;
         stabilize( initFrames, stablizedFrames );
         initFrames = stablizedFrames;
-        stablizedFrames.clear( );
+        //stablizedFrames.clear( );
+        //assert( initFrames.size() > 0 );
     }
 
-    std::cout << "[INFO] Final pass " << endl;
-    stabilize( initFrames, stablizedFrames );
     std::cout << "Corrected frames " << stablizedFrames.size() << std::endl;
 
     /*-----------------------------------------------------------------------------

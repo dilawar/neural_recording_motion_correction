@@ -65,7 +65,7 @@ struct Trajectory
 };
 
 
-void stabilize( vector< Mat >& frames
+void stabilize( const vector< Mat >& frames
         , vector<Mat >& result )
 {
     // For further analysis
