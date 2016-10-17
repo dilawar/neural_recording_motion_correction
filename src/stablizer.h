@@ -76,5 +76,4 @@ struct Trajectory
  */
 void stabilize( const vector< Mat >& frames , vector<Mat >& result );
 
-
 #endif   /* ----- #ifndef motion_stabilizer_INC  ----- */

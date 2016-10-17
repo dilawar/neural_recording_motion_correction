@@ -23,6 +23,8 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 
+#include "easylogging++.h"
+
 using namespace std;
 using namespace cv;
 

@@ -6,6 +6,7 @@ set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
     )
 
 include_directories( ${CMAKE_SOURCE_DIR}/external/tclap-1.2.1/include/ )
+include_directories( ${CMAKE_SOURCE_DIR}/external/easylogging/ )
 
 add_definitions( -std=c++11 -Wall )
 

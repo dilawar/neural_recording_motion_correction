@@ -33,20 +33,35 @@ void stabilize( const vector< Mat >& frames, vector<Mat >& result )
     // Step 1 - Get previous to current frame transformation (dx, dy, da) for all frames
     vector <TransformParam> prev_to_cur_transform; // previous to current
     Mat last_T;
-    Mat curGrey, prevGrey;
 
     for (size_t k = 1; k < frames.size(); k++)
     {
-        prevGrey = frames[k-1];
-        curGrey = frames[k];
+        Mat prev = frames[k-1];
+        Mat cur = frames[k];
         // vector from prev to cur
         vector <Point2f> prevCorner, curCorner;
         vector <Point2f> prevCorner2, curCorner2;
         vector <uchar> status;
         vector <float> err;
 
-        goodFeaturesToTrack(prevGrey, prevCorner, 200, 0.01, 30);
-        calcOpticalFlowPyrLK(prevGrey, curGrey, prevCorner, curCorner, status, err);
+        /*-----------------------------------------------------------------------------
+         *  Function goodFeaturesToTrack works well with real video recordings
+         *  where feature sizes are large. 
+         *
+         *  To make it work with small feature sizes, we need to find as many
+         *  good feature points as possible. It probably a good idea to apply
+         *  bilinearFilter before continuing.
+         *-----------------------------------------------------------------------------*/
+
+        Mat curGrey; 
+        Mat prevGrey;
+
+        bilateralFilter( cur, curGrey, 9, 50, 50 );
+        bilateralFilter( prev, prevGrey, 9, 50, 50 );
+
+        size_t totalEntries = curGrey.cols * curGrey.rows;
+        goodFeaturesToTrack( prevGrey, prevCorner, totalEntries, 0.01, 1);
+        calcOpticalFlowPyrLK( prevGrey, curGrey, prevCorner, curCorner, status, err);
 
         // weed out bad matches
         for(size_t i=0; i < status.size(); i++)
@@ -79,7 +94,6 @@ void stabilize( const vector< Mat >& frames, vector<Mat >& result )
 #ifdef  DEBUG
         out_transform << k << " " << dx << " " << dy << " " << da << endl;
 #endif     /* -----  not DEBUG  ----- */
-
 
         curGrey.copyTo(prevGrey);
 
@@ -181,11 +195,11 @@ void stabilize( const vector< Mat >& frames, vector<Mat >& result )
     Mat T(2,3,CV_64F);
 
     // get the aspect ratio correct
-    int vert_border = HORIZONTAL_BORDER_CROP * prevGrey.rows / prevGrey.cols;
+    int vert_border = HORIZONTAL_BORDER_CROP * frames[0].rows / frames[0].cols;
 
     for( size_t k = 0; k < frames.size() -1; k ++ )
     {
-        curGrey = frames[k];
+        Mat cur = frames[k];
         T.at<double>(0,0) = cos(new_prev_to_cur_transform[k].da);
         T.at<double>(0,1) = -sin(new_prev_to_cur_transform[k].da);
         T.at<double>(1,0) = sin(new_prev_to_cur_transform[k].da);
@@ -196,14 +210,14 @@ void stabilize( const vector< Mat >& frames, vector<Mat >& result )
 
         Mat cur2;
 
-        warpAffine(curGrey, cur2, T, curGrey.size());
+        warpAffine(cur, cur2, T, cur.size());
 
         cur2 = cur2( Range(vert_border, cur2.rows-vert_border)
                 , Range(HORIZONTAL_BORDER_CROP, cur2.cols-HORIZONTAL_BORDER_CROP)
                 );
 
         // Resize cur2 back to cur size, for better side by side comparison
-        resize(cur2, cur2, curGrey.size());
+        resize(cur2, cur2, cur.size());
         result.push_back( cur2 );
     }
 }

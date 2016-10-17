@@ -28,6 +28,9 @@
 #include "stablizer.h"
 #include "tclap/CmdLine.h"
 
+#include "easylogging++.h"
+INITIALIZE_EASYLOGGINGPP
+
 #include "globals.h"                            /* verbose_flag_ is defined here 
                                                    along with other global 
                                                    variables. */
@@ -43,6 +46,14 @@ int main(int argc, char **argv)
     string infile;
     string outfile;
     size_t numPasses = 1;
+
+    /*-----------------------------------------------------------------------------
+     *  Configure logger.
+     *-----------------------------------------------------------------------------*/
+    el::Configurations defaultConf;
+    defaultConf.setToDefault( );
+    defaultConf.setGlobally( el::ConfigurationType::Format, "%datetime %msg" );
+    el::Loggers::reconfigureLogger( "default", defaultConf );
 
     try {  
 
@@ -117,6 +128,8 @@ int main(int argc, char **argv)
         //stablizedFrames.clear( );
         //assert( initFrames.size() > 0 );
     }
+
+
 
     std::cout << "Corrected frames " << stablizedFrames.size() << std::endl;
 
