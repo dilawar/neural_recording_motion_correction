@@ -1,6 +1,7 @@
 # Video Stabilizer 
 
-See the demo [here on youtube](https://youtu.be/vGjIFvzOOQ8).
+See the demo [here on youtube](https://youtu.be/vGjIFvzOOQ8)(corrected video is on right). Another video showing 
+the cost of overdoing motion correction [here](https://youtu.be/zOq8m98t4uE) - (this time the corrected video is on left). 
 
 # Dependencies 
 
