@@ -18,7 +18,10 @@ the cost of overdoing motion correction [here](https://youtu.be/zOq8m98t4uE) - (
 
 # Usage 
 
-    $ videostab -h 
+Typical usage (with 4 passes).
+
+    $ videostab -i /path/to/video -n 4 
+    $ videostab -i /path/to/video -o /path/to/output -n 4
 
 Will print the help message on how to use the application.
 
