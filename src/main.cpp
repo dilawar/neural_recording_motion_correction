@@ -28,10 +28,12 @@
 #include "motion_stabilizer.hpp"
 #include "tclap/CmdLine.h"
 
+#include "globals.h"                            /* verbose_flag_ is defined here 
+                                                   along with other global 
+                                                   variables. */
+
 using namespace std;
 using namespace cv;
-
-static bool verbose_flag_ = false;
 
 int main(int argc, char **argv)
 {
@@ -107,6 +109,7 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < numPasses  ; i++) 
     {
         stablizedFrames.clear( );
+        assert( stablizedFrames.size() == 0 );
         std::cout << "[INFO] Running pass " << i + 1 <<  " out of " << numPasses 
             << std::endl;
         stabilize( initFrames, stablizedFrames );
@@ -139,6 +142,8 @@ int main(int argc, char **argv)
             Mat combined;
             hconcat( frames[i], stablizedFrames[i], combined );
             combinedFrames.push_back( combined );
+            imshow( "combined", combined );
+            waitKey( 100 );
         }
         write_frames( combinedVideofileName, combinedFrames, infile );
     }
