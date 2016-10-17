@@ -191,8 +191,8 @@ void write_frames(
         )
 {
     // Get the extension of file.
-    size_t lastDotPos = infile.find_last_of( '.' );
-    string ext = infile.substr( lastDotPos + 1 );
+    size_t lastDotPos = outfile.find_last_of( '.' );
+    string ext = outfile.substr( lastDotPos + 1 );
     if( ext.size( ) < 1 )
     {
         std::cout << "[WARN] I could not determine file type,"
@@ -218,6 +218,7 @@ void write_frames(
             << " I am going to use fps = 15. " << std::endl;
         fps = 15.0;
     }
+    std::cout << "[INFO] Writing vidoe at fps = " << fps << std::endl;
 
 #ifdef USE_OPENCV3
     int fourcc = in.get( CAP_PROP_FOURCC );
@@ -327,7 +328,7 @@ void write_frames_to_tiff ( const string& outfile
     // Close the infile.
     TIFFClose( in );
     TIFFClose( out );
-    std::cout << "[INFO] Wrote corrected frames to " << outfile << std::endl;
+    std::cout << "[INFO] Wrote frames to " << outfile << std::endl;
 }
 
 

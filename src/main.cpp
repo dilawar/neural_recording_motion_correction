@@ -155,8 +155,8 @@ int main(int argc, char **argv)
             Mat combined;
             hconcat( frames[i], stablizedFrames[i], combined );
             combinedFrames.push_back( combined );
-            imshow( "combined", combined );
-            waitKey( 100 );
+            //imshow( "combined", combined );
+            //waitKey( 100 );
         }
         write_frames( combinedVideofileName, combinedFrames, infile );
     }
