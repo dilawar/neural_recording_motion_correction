@@ -1,11 +1,18 @@
 # Video Stabilizer 
 
-See the demo [here on youtube](https://youtu.be/vGjIFvzOOQ8)(corrected video is on right). Another video showing 
-the cost of overdoing motion correction [here](https://youtu.be/zOq8m98t4uE) - (this time the corrected video is on left). 
+- See the demo [here on youtube](https://youtu.be/vGjIFvzOOQ8)(corrected video is on right). 
+- Another video showing the cost of overdoing motion correction [here](https://youtu.be/zOq8m98t4uE) - (this time the corrected video is on left). 
+
+This is optmized for recordings from neurons. It might even work on any recording which has small feature sizes. It 
+can not correct large fluctuation. On normal video recordings, this application will be quite slow.
+
+If you like the output but want to tweak it, let me know.
 
 # Dependencies 
 
-- libtiff 
+Development package of following libraries.
+
+- libtiff
 - opencv 
 
 # Build and install 
@@ -32,14 +39,9 @@ Typical usage (with 4 passes).
 - tiff 
 - any format which opencv can decode.
 
-## Output formats
-
-- tiff (when input is a tiff file)
-- avi  (when input is NOT a tiff file).
-
 # Contact 
 
-Email to dilawars@ncbs.res.in
+In case, you need any help,  mail to dilawars@ncbs.res.in
 
 # Credits 
 
