@@ -16,8 +16,8 @@ Development package of following libraries.
 
 # Build and install 
 
-    $ git clone https://github.com/dilawar/video_stabilizer 
-    $ cd video_stabilizer 
+    $ git clone https://github.com/dilawar/neural_recording_motion_correction
+    $ cd neural_recording_motion_correction
     $ cmake .
     $ make 
     $ sudo make install
