@@ -1,12 +1,11 @@
 # Video Stabilizer 
 
-- See the demo [here on youtube](https://youtu.be/vGjIFvzOOQ8)(corrected video is on right). 
-- Another video showing the cost of overdoing motion correction [here](https://youtu.be/zOq8m98t4uE) - (this time the corrected video is on left). 
+See the demo [here on youtube](https://youtu.be/vGjIFvzOOQ8) (stabilised video is on the left).
 
-This is optmized for recordings from neurons. It might even work on any recording which has small feature sizes. It 
-can not correct large fluctuation. On normal video recordings, this application will be quite slow.
+![![Demo](https://img.youtube.com/vi/GjIFvzOOQ8/0.jpg)](https://youtu.be/vGjIFvzOOQ8)
 
-If you like the output but want to tweak it, let me know.
+This is optmized for recordings of calcium activity. It might even work on any recording which has small feature sizes. It 
+can not correct large fluctuation.
 
 # Dependencies 
 
